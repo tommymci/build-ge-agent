@@ -1,0 +1,13 @@
+.DS_Store
+*.swp
+*.pyc
+__pycache__/
+.idea/
+.vscode/
+*.log
+
+# Local configs / credentials — never commit
+.env
+.env.*
+*.json.key
+service-account-*.json
