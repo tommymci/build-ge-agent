@@ -103,7 +103,8 @@ I_COPY = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="cu
 
 html = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GE License Dashboard — @@PROJECT@@</title>
+<title>Gemini Enterprise — License Dashboard</title>
+<link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Google_Gemini_icon_2025.svg/500px-Google_Gemini_icon_2025.svg.png">
 <style>
  *{box-sizing:border-box;margin:0;padding:0}
  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0d1117;color:#e6edf3;padding:24px}
@@ -140,7 +141,7 @@ html = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
   .bar button{flex:1 1 auto}
  }
 </style></head><body>
-<h1>Gemini Enterprise — License Dashboard</h1>
+<h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Google_Gemini_icon_2025.svg/500px-Google_Gemini_icon_2025.svg.png" alt="" style="height:24px;width:24px;vertical-align:-5px;margin-right:9px">Gemini Enterprise — License Dashboard</h1>
 <div class="sub">Project <b>@@PROJECT@@</b> · generated @@GENERATED@@ · snapshot — regenerate to refresh</div>
 <div class="kpis">
  <div class="kpi"><span class="ic">@@I_USERS@@</span><div><div class="n">@@ASSIGNED@@ / 50</div><div class="l">Assigned</div></div></div>

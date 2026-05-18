@@ -11,3 +11,6 @@ __pycache__/
 .env.*
 *.json.key
 service-account-*.json
+
+# clasp deploy folder — local only (contains your scriptId)
+license-dashboard/clasp-project/
