@@ -140,6 +140,14 @@ curl -s -X DELETE \
   "https://discoveryengine.googleapis.com/v1alpha/projects/$PROJECT_ID/locations/global/collections/default_collection/engines/ENGINE_ID/assistants/default_assistant/agents/AGENT_ID"
 ```
 
+## "I created an agent via API but it stays in `state: PRIVATE` forever"
+
+This applies to `lowCodeAgentDefinition` agents created via the v1alpha API. Even with `sharingConfig.scope: ALL_USERS`, the agent is stuck in `PRIVATE` and doesn't appear in the GE workspace sidebar. `state` is output-only — you can't PATCH it directly. There's no `:publish` or `:deploy` method exposed. The Cloud Console agent details page is read-only and offers no Publish button. The only way to transition `PRIVATE → ENABLED` is to recreate the agent via the GE visual builder (the **+ New agent** button in the GE app sidebar) — that flow's Save/Publish click handles the state transition.
+
+**Practical workaround:** create the engine and register tools via API (these work great), but **create the agent itself via the GE UI**. Until Google exposes a publish method or auto-publishes API-created agents, this hybrid is the working pattern.
+
+If you must do it fully via API, the only known path is `adkAgentDefinition.provisionedReasoningEngine` referencing a Vertex AI Agent Engine deployment — see Tier 3.
+
 ## Still stuck?
 
 - Check the Agent Engine playground in Cloud Console — it isolates problems to either the agent itself or the GE plumbing

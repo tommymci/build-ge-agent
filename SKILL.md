@@ -27,10 +27,12 @@ This skill turns a vague idea ("I want a GE agent that does X") into a working, 
 Before recommending anything, gather:
 
 1. **What should the agent do?** (one sentence)
-2. **Does it need to call an external system or API** (CRM, monday.com, internal ticketing, custom data source) — yes/no?
+2. **Does it need to call an external system or API** (CRM, monday.com, internal ticketing, custom data source) — yes/no? If yes, **is the tool exposed as an MCP server, or as a REST API?**
 3. **What GCP project hosts your Gemini Enterprise workspace?** (it's OK if they don't know — see Step 2)
 
 If the user can't answer Q3, run [find-engine.sh](find-engine.sh) to discover their engine. See "Connect to your GE workspace" below.
+
+If the user doesn't have a GE engine yet, [create-engine.sh](create-engine.sh) creates a fresh Agentspace-shaped engine in any project they have admin access to.
 
 ## Step 2 — pick the tier
 
@@ -39,10 +41,13 @@ Based on their answer to Q2:
 | User says | Recommend |
 |---|---|
 | "No external system, just docs / Drive / Gmail / Calendar / general knowledge" | **Tier 1** — see [tier1-no-code.md](tier1-no-code.md) |
-| "Yes, it should call our [API / database / SaaS]" | **Tier 2** — see [tier2-openapi.md](tier2-openapi.md) |
+| "Yes — it's a REST API / OpenAPI" | **Tier 2 (OpenAPI)** — see [tier2-openapi.md](tier2-openapi.md) |
+| "Yes — it's an MCP server" (Streamable HTTP / SSE) | **Tier 2 (MCP)** — see [tier2-mcp.md](tier2-mcp.md) |
 | "It needs to run heavy custom logic / algorithms / multi-step reasoning loops" | **Tier 3** — see "Tier 3" section below |
 
 **Default to Tier 1** if it's at all plausible. People over-engineer GE agents constantly. Most "complex" agents are really just LLM + a couple of connectors.
+
+**Tier 2 OpenAPI vs MCP:** OpenAPI is fully API-driven (use [register-openapi-tool.sh](register-openapi-tool.sh)). MCP requires a one-time UI click in GE to register the server — Discovery Engine v1alpha doesn't expose MCP tool registration yet (as of Dec 2025).
 
 ## Step 3 — connect to their GE workspace
 
