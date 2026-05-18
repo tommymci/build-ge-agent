@@ -66,9 +66,27 @@ Read-only against GE — the code issues only GET requests; it never modifies li
 - **Filter**: buttons for All / Reclaim / Watch / Active / Never used / No license
 - **Copy reclaim emails**: button copies all reclaim-candidate emails to clipboard — paste into your next license-cleanup batch
 
-## Updating the code later
+## Live deployment (keep this URL stable)
 
-Edit `Code.gs` in the Apps Script editor, then **Deploy → Manage deployments → Edit (pencil) → New version → Deploy**. The same URL stays valid.
+- **Project (hkmci.com):** `1BF_GPBfk-Zsd_0Ou_rLD2oHKwUcE43vjE0nuyVEciPfTNxS4iN6qKTBS`
+- **Production deployment ID:** `AKfycbyjbpjKd3zePWwvIoYdk-8YMmt7qrQght0sasbgr-CICedTO-GvqttZg7UbEqdtNb26iA`
+- **Dashboard URL (bookmark, never changes):**
+  `https://script.google.com/macros/s/AKfycbyjbpjKd3zePWwvIoYdk-8YMmt7qrQght0sasbgr-CICedTO-GvqttZg7UbEqdtNb26iA/exec`
+
+## Updating the code later — KEEP THE SAME URL
+
+⚠️ **Never use "New deployment" / `clasp deploy` with no args** — that mints a *new* URL.
+Always update the **existing** deployment so the bookmarked URL keeps working:
+
+**Via clasp (recommended — one command):**
+```bash
+cd build-ge-agent-skill/license-dashboard/clasp-project
+cp ../Code.gs ./Code.gs && cp ../appsscript.json ./appsscript.json
+clasp push --force
+bash ../redeploy.sh        # redeploys the SAME deployment ID -> same URL
+```
+
+**Via the editor:** Deploy → **Manage deployments** → pick the existing "GE License Dashboard" → **Edit (pencil)** → Version: **New version** → **Deploy**. Same URL stays valid. (Do NOT click "New deployment".)
 
 ## Notes & limits
 
