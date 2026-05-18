@@ -124,7 +124,8 @@ function doGet() {
   }
   var html = renderHtml(loaded.recs, loaded.meta);
   return HtmlService.createHtmlOutput(html)
-    .setTitle('Gemini Enterprise License Dashboard')
+    .setTitle('Gemini Enterprise — License Dashboard')
+    .setFaviconUrl('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Google_Gemini_icon_2025.svg/500px-Google_Gemini_icon_2025.svg.png')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
