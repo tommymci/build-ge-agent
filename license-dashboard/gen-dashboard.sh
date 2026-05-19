@@ -204,7 +204,7 @@ with open(out, "w") as f:
     f.write(html)
 
 print(f"Wrote {out}")
-print(f"  Assigned: {assigned}/50 | Reclaim(>30d idle): {reclaim} | Watch(15-30d): {watch} | Never-used: {never}")
+print(f"  License Quota: {assigned}/50 | Active: {active} | Inactive (reclaim-able): {inactive}")
 print(f"  Open it:  open {out}")
 PYEOF
 
