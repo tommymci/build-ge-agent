@@ -87,10 +87,9 @@ for u in rows:
     })
 
 assigned = sum(1 for r in recs if r["state"] == "ASSIGNED")
-reclaim = sum(1 for r in recs if r["flag"] == "reclaim")
-watch = sum(1 for r in recs if r["flag"] == "watch")
-never = sum(1 for r in recs if r["flag"] == "neverused")
-generated = now.strftime("%Y-%m-%d %H:%M UTC")
+active = sum(1 for r in recs if r["flag"] == "active")
+inactive = assigned - active   # assigned but not actively used (reclaim+watch+neverused)
+generated = (now + datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M") + " HKT"
 
 data_json = json.dumps(recs)
 
@@ -115,7 +114,7 @@ html = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
  .kpi .ic{color:#8b949e;flex-shrink:0}
  .kpi .n{font-size:24px;font-weight:700;line-height:1}
  .kpi .l{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-top:5px}
- .kpi.red .ic{color:#f85149}.kpi.amber .ic{color:#d29922}.kpi.blue .ic{color:#58a6ff}
+ .kpi.red .ic{color:#f85149}.kpi.amber .ic{color:#d29922}.kpi.blue .ic{color:#58a6ff}.kpi.green .ic{color:#3fb950}
  .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
  .bar button{background:#161b22;border:1px solid #30363d;color:#e6edf3;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px}
  .bar button.active{background:#1f6feb;border-color:#1f6feb}
@@ -126,6 +125,9 @@ html = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
  th{background:#161b22;cursor:pointer;user-select:none;position:sticky;top:0}
  th:hover{color:#58a6ff}
  tr.reclaim{background:#f8514915}tr.watch{background:#d2992212}tr.neverused{background:#1f6feb12}
+ tr.grp{cursor:pointer;background:#1c2128}tr.grp:hover{background:#22272e}
+ tr.grp td{font-weight:700;font-size:13px;border-bottom:1px solid #30363d}
+ .caret{display:inline-block;width:16px;color:#8b949e}.cnt{color:#8b949e;font-weight:400;margin-left:4px}
  .pill{display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600}
  .pill.reclaim{background:#f8514933;color:#ff7b72}
  .pill.watch{background:#d2992233;color:#e3b341}
@@ -142,49 +144,44 @@ html = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
  }
 </style></head><body>
 <h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Google_Gemini_icon_2025.svg/500px-Google_Gemini_icon_2025.svg.png" alt="" style="height:24px;width:24px;vertical-align:-5px;margin-right:9px">Gemini Enterprise — License Dashboard</h1>
-<div class="sub">Project <b>@@PROJECT@@</b> · generated @@GENERATED@@ · snapshot — regenerate to refresh</div>
+<div class="sub">Project <b>@@PROJECT@@</b> · Last Update: <b>@@GENERATED@@</b> · snapshot — regenerate to refresh</div>
 <div class="kpis">
- <div class="kpi"><span class="ic">@@I_USERS@@</span><div><div class="n">@@ASSIGNED@@ / 50</div><div class="l">Assigned</div></div></div>
- <div class="kpi red"><span class="ic">@@I_ALERT@@</span><div><div class="n">@@RECLAIM@@</div><div class="l">Reclaim &gt;30d idle</div></div></div>
- <div class="kpi amber"><span class="ic">@@I_CLOCK@@</span><div><div class="n">@@WATCH@@</div><div class="l">Watch &gt;14d idle</div></div></div>
- <div class="kpi blue"><span class="ic">@@I_EYEOFF@@</span><div><div class="n">@@NEVER@@</div><div class="l">Never used</div></div></div>
+ <div class="kpi"><span class="ic">@@I_USERS@@</span><div><div class="n">@@ASSIGNED@@ / 50</div><div class="l">License Quota</div></div></div>
+ <div class="kpi green"><span class="ic">@@I_CLOCK@@</span><div><div class="n">@@ACTIVE@@</div><div class="l">Active (&le;14d idle)</div></div></div>
+ <div class="kpi red"><span class="ic">@@I_ALERT@@</span><div><div class="n">@@INACTIVE@@</div><div class="l">Inactive (reclaim-able)</div></div></div>
 </div>
 <div class="bar">
- <button data-f="all" class="active">All</button>
- <button data-f="reclaim">Reclaim</button>
- <button data-f="watch">Watch</button>
- <button data-f="active">Active</button>
- <button data-f="neverused">Never used</button>
- <button data-f="unlicensed">No license</button>
  <button class="copybtn" id="copy">@@I_COPY@@Copy reclaim emails</button>
 </div>
 <div class="tablewrap"><table id="t">
 <thead><tr>
  <th data-k="email">Email</th>
- <th data-k="state">License</th><th data-k="assigned">Date assigned</th>
+ <th data-k="assigned">Date assigned</th>
  <th data-k="last">Last login</th><th data-k="idle">Days idle</th>
- <th data-k="flag">Category</th>
 </tr></thead><tbody></tbody></table></div>
 <script>
 const DATA = @@DATA_JSON@@;
-let sortK="idle", sortDir=-1, filt="all";
+let sortK="idle", sortDir=-1;
+const collapsed={withlic:false,nolic:true};
 const tb=document.querySelector("#t tbody");
+const grp=r=>r.flag==="unlicensed"?"nolic":"withlic";
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function sortRows(a){return a.slice().sort((p,q)=>{let x=p[sortK],y=q[sortK];
+ if(sortK==="idle"){x=x===""?1e9:+x;y=y===""?1e9:+y;}
+ return x<y?-1*sortDir:x>y?1*sortDir:0;});}
 function render(){
- let rows=DATA.filter(r=>filt==="all"||r.flag===filt);
- rows.sort((a,b)=>{let x=a[sortK],y=b[sortK];
-  if(sortK==="idle"){x=x===""?-1:+x;y=y===""?-1:+y;}
-  return x<y?-1*sortDir:x>y?1*sortDir:0;});
- tb.innerHTML=rows.map(r=>`<tr class="${r.flag}">
-  <td class="email">${r.email}</td>
-  <td>${r.state}</td><td>${r.assigned||"—"}</td><td>${r.last||"—"}</td>
-  <td>${r.idle===""?"—":r.idle}</td>
-  <td><span class="pill ${r.flag}">${r.flag}</span></td></tr>`).join("");
+ const g={withlic:[],nolic:[]};DATA.forEach(r=>g[grp(r)].push(r));
+ let out="";
+ [["withlic","With License"],["nolic","No License"]].forEach(G=>{
+  const k=G[0],lbl=G[1],rows=g[k],col=collapsed[k];
+  out+=`<tr class="grp" data-g="${k}"><td colspan="4"><span class="caret">${col?"▶":"▼"}</span>${lbl}<span class="cnt">(${rows.length})</span></td></tr>`;
+  if(!col)sortRows(rows).forEach(r=>{const ul=r.flag==="unlicensed";out+=`<tr class="${r.flag}"><td class="email">${esc(r.email)}</td><td>${ul?"—":(r.assigned||"—")}</td><td>${r.last||"—"}</td><td>${ul?"—":(r.idle===""?'<span class="pill neverused">never</span>':`<span class="pill ${r.flag}">${r.idle}d</span>`)}</td></tr>`;});
+ });
+ tb.innerHTML=out;
+ document.querySelectorAll("tr.grp").forEach(tr=>tr.onclick=()=>{const k=tr.getAttribute("data-g");collapsed[k]=!collapsed[k];render();});
 }
 document.querySelectorAll("th").forEach(th=>th.onclick=()=>{
  const k=th.dataset.k; if(sortK===k)sortDir*=-1;else{sortK=k;sortDir=1;} render();});
-document.querySelectorAll(".bar button[data-f]").forEach(b=>b.onclick=()=>{
- document.querySelectorAll(".bar button[data-f]").forEach(x=>x.classList.remove("active"));
- b.classList.add("active"); filt=b.dataset.f; render();});
 document.querySelector("#copy").onclick=()=>{
  const e=DATA.filter(r=>r.flag==="reclaim").map(r=>r.email).join("\\n");
  const ta=document.createElement("textarea");ta.value=e;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
@@ -194,8 +191,8 @@ render();
 
 for tok, val in [
     ("@@PROJECT@@", project), ("@@GENERATED@@", generated),
-    ("@@ASSIGNED@@", str(assigned)), ("@@RECLAIM@@", str(reclaim)),
-    ("@@WATCH@@", str(watch)), ("@@NEVER@@", str(never)),
+    ("@@ASSIGNED@@", str(assigned)), ("@@ACTIVE@@", str(active)),
+    ("@@INACTIVE@@", str(inactive)),
     ("@@I_USERS@@", I_USERS), ("@@I_ALERT@@", I_ALERT),
     ("@@I_CLOCK@@", I_CLOCK), ("@@I_EYEOFF@@", I_EYEOFF),
     ("@@I_COPY@@", I_COPY),
