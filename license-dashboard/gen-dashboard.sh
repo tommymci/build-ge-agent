@@ -135,6 +135,7 @@ html = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
  .pill.neverused{background:#1f6feb33;color:#58a6ff}
  .pill.unlicensed{background:#30363d;color:#8b949e}
  td.email{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+ td.email.inactive{color:#ff7b72;font-weight:600}.email .dot{color:#f85149;margin-right:6px;font-size:9px;vertical-align:1px}
  @media(max-width:640px){
   body{padding:14px}h1{font-size:17px}.sub{font-size:12px;margin-bottom:16px}
   .kpi{flex:1 1 calc(50% - 6px);min-width:0;padding:12px 14px;gap:10px}
@@ -147,11 +148,8 @@ html = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <div class="sub">Last Update: <b>@@GENERATED@@</b></div>
 <div class="kpis">
  <div class="kpi"><span class="ic">@@I_USERS@@</span><div><div class="n">@@ASSIGNED@@ / 50</div><div class="l">License Quota</div></div></div>
- <div class="kpi green"><span class="ic">@@I_CLOCK@@</span><div><div class="n">@@ACTIVE@@</div><div class="l">Active (&le;14d idle)</div></div></div>
- <div class="kpi red"><span class="ic">@@I_ALERT@@</span><div><div class="n">@@INACTIVE@@</div><div class="l">Inactive (reclaim-able)</div></div></div>
-</div>
-<div class="bar">
- <button class="copybtn" id="copy">@@I_COPY@@Copy reclaim emails</button>
+ <div class="kpi green"><span class="ic">@@I_CLOCK@@</span><div><div class="n">@@ACTIVE@@</div><div class="l">Active</div></div></div>
+ <div class="kpi red"><span class="ic">@@I_ALERT@@</span><div><div class="n">@@INACTIVE@@</div><div class="l">Inactive</div></div></div>
 </div>
 <div class="tablewrap"><table id="t">
 <thead><tr>
@@ -175,17 +173,13 @@ function render(){
  [["withlic","With License"],["nolic","No License"]].forEach(G=>{
   const k=G[0],lbl=G[1],rows=g[k],col=collapsed[k];
   out+=`<tr class="grp" data-g="${k}"><td colspan="4"><span class="caret">${col?"▶":"▼"}</span>${lbl}<span class="cnt">(${rows.length})</span></td></tr>`;
-  if(!col)sortRows(rows).forEach(r=>{const ul=r.flag==="unlicensed";out+=`<tr class="${r.flag}"><td class="email">${esc(r.email)}</td><td>${ul?"—":(r.assigned||"—")}</td><td>${r.last||"—"}</td><td>${ul?"—":(r.idle===""?'<span class="pill reclaim">∞</span>':`<span class="pill ${r.flag}">${r.idle}d</span>`)}</td></tr>`;});
+  if(!col)sortRows(rows).forEach(r=>{const ul=r.flag==="unlicensed";const inact=r.flag==="reclaim"||r.flag==="watch"||r.flag==="neverused";out+=`<tr class="${r.flag}"><td class="email${inact?' inactive':''}">${inact?'<span class="dot">●</span>':''}${esc(r.email)}</td><td>${ul?"—":(r.assigned||"—")}</td><td>${r.last||"—"}</td><td>${ul?"—":(r.idle===""?'<span class="pill reclaim">∞</span>':`<span class="pill ${r.flag}">${r.idle}d</span>`)}</td></tr>`;});
  });
  tb.innerHTML=out;
  document.querySelectorAll("tr.grp").forEach(tr=>tr.onclick=()=>{const k=tr.getAttribute("data-g");collapsed[k]=!collapsed[k];render();});
 }
 document.querySelectorAll("th").forEach(th=>th.onclick=()=>{
  const k=th.dataset.k; if(sortK===k)sortDir*=-1;else{sortK=k;sortDir=1;} render();});
-document.querySelector("#copy").onclick=()=>{
- const e=DATA.filter(r=>r.flag==="reclaim").map(r=>r.email).join("\\n");
- const ta=document.createElement("textarea");ta.value=e;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
- alert("Copied "+DATA.filter(r=>r.flag==="reclaim").length+" reclaim emails");};
 render();
 </script></body></html>"""
 
@@ -204,7 +198,7 @@ with open(out, "w") as f:
     f.write(html)
 
 print(f"Wrote {out}")
-print(f"  License Quota: {assigned}/50 | Active: {active} | Inactive (reclaim-able): {inactive}")
+print(f"  License Quota: {assigned}/50 | Active: {active} | Inactive: {inactive}")
 print(f"  Open it:  open {out}")
 PYEOF
 
