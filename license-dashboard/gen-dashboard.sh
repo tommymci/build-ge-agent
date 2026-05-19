@@ -144,7 +144,7 @@ html = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
  }
 </style></head><body>
 <h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Google_Gemini_icon_2025.svg/500px-Google_Gemini_icon_2025.svg.png" alt="" style="height:24px;width:24px;vertical-align:-5px;margin-right:9px">Gemini Enterprise — License Dashboard</h1>
-<div class="sub">Project <b>@@PROJECT@@</b> · Last Update: <b>@@GENERATED@@</b> · snapshot — regenerate to refresh</div>
+<div class="sub">Last Update: <b>@@GENERATED@@</b></div>
 <div class="kpis">
  <div class="kpi"><span class="ic">@@I_USERS@@</span><div><div class="n">@@ASSIGNED@@ / 50</div><div class="l">License Quota</div></div></div>
  <div class="kpi green"><span class="ic">@@I_CLOCK@@</span><div><div class="n">@@ACTIVE@@</div><div class="l">Active (&le;14d idle)</div></div></div>
@@ -175,7 +175,7 @@ function render(){
  [["withlic","With License"],["nolic","No License"]].forEach(G=>{
   const k=G[0],lbl=G[1],rows=g[k],col=collapsed[k];
   out+=`<tr class="grp" data-g="${k}"><td colspan="4"><span class="caret">${col?"▶":"▼"}</span>${lbl}<span class="cnt">(${rows.length})</span></td></tr>`;
-  if(!col)sortRows(rows).forEach(r=>{const ul=r.flag==="unlicensed";out+=`<tr class="${r.flag}"><td class="email">${esc(r.email)}</td><td>${ul?"—":(r.assigned||"—")}</td><td>${r.last||"—"}</td><td>${ul?"—":(r.idle===""?'<span class="pill neverused">never</span>':`<span class="pill ${r.flag}">${r.idle}d</span>`)}</td></tr>`;});
+  if(!col)sortRows(rows).forEach(r=>{const ul=r.flag==="unlicensed";out+=`<tr class="${r.flag}"><td class="email">${esc(r.email)}</td><td>${ul?"—":(r.assigned||"—")}</td><td>${r.last||"—"}</td><td>${ul?"—":(r.idle===""?'<span class="pill reclaim">∞</span>':`<span class="pill ${r.flag}">${r.idle}d</span>`)}</td></tr>`;});
  });
  tb.innerHTML=out;
  document.querySelectorAll("tr.grp").forEach(tr=>tr.onclick=()=>{const k=tr.getAttribute("data-g");collapsed[k]=!collapsed[k];render();});
